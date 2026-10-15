@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="A party game for up to 10 friends: answer about yourself, guess each other, see who knows who best.">
+<title>Friendship Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Figtree:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap">
+<style>
+/* Layout: one centered game column (max 560px), a slim status bar, big tappable answer tiles like a game-show podium. */
+:root{
+  --bg:#EAF1EE; --card:#FFFFFF; --ink:#11231F; --muted:#557069; --line:#CBDCD6;
+  --accent:#F2A900; --accent-ink:#1E1600; --teal:#0F766E; --teal-ink:#FFFFFF;
+  --o1:#E8590C; --o2:#1C7ED6; --o3:#2B9348; --o4:#9C36B5; --o-ink:#FFFFFF;
+  --good:#2B9348; --good-bg:#DDF3E3; --warn:#B7791F; --bad:#C92A2A; --bad-bg:#FBE3E3;
+  --easy:#2B9348; --medium:#D9480F; --hard:#AE3EC9;
+  --p0:#E0533A;--p1:#2F7FD0;--p2:#1E8F66;--p3:#7C4DDB;--p4:#D23F80;--p5:#0E8291;--p6:#B7791F;--p7:#4F51C9;--p8:#4E8A1E;--p9:#D9631B;
+  --pc:var(--teal); --tint:13%; --soft:7%;
+  --display:"Dela Gothic One","Arial Black",Impact,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1716; --card:#142422; --ink:#E6F1EE; --muted:#8FA9A2; --line:#24403B;
+  --accent:#F5B82E; --accent-ink:#1E1600; --teal:#2DB3A6; --teal-ink:#06201D;
+  --good-bg:#16352A; --bad-bg:#3A1A1C; --good:#5BD07C; --bad:#FF7B7B; --tint:20%; --soft:14%;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1716; --card:#142422; --ink:#E6F1EE; --muted:#8FA9A2; --line:#24403B;
+  --accent:#F5B82E; --accent-ink:#1E1600; --teal:#2DB3A6; --teal-ink:#06201D;
+  --good-bg:#16352A; --bad-bg:#3A1A1C; --good:#5BD07C; --bad:#FF7B7B; --tint:20%; --soft:14%;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;padding:0 16px;padding-block:16px 48px}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,.display{font-family:var(--display);font-weight:400;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,9vw,3rem);line-height:1}
+h2{font-size:1.45rem;line-height:1.15}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .brand{font-family:var(--display);font-size:1rem;margin-right:auto}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:700;background:var(--card)}
+.chip.code{font-family:var(--mono);letter-spacing:.12em}
+.mode-easy{color:var(--easy)}.mode-medium{color:var(--medium)}.mode-hard{color:var(--hard)}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:14px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row > *{min-width:0}
+input[type=text]{font:inherit;font-size:1.05rem;width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=text]:focus{outline:3px solid var(--accent);outline-offset:1px}
+input.codein{font-family:var(--mono);text-transform:uppercase;letter-spacing:.3em;text-align:center;font-size:1.3rem}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:700;background:var(--bg);color:var(--ink);border:1.5px solid var(--line)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn-main{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-size:1.05rem}
+.btn-alt{background:var(--teal);color:var(--teal-ink);border-color:transparent}
+.btn-link{background:none;border:0;padding:6px 0;color:var(--muted);text-decoration:underline;font-weight:600}
+.grow{flex:1}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:460px){.modes{grid-template-columns:1fr}}
+.mode{text-align:left;display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--bg)}
+.mode b{font-family:var(--display);font-weight:400;font-size:1.05rem}
+.mode span{font-weight:500;font-size:.82rem;color:var(--muted)}
+.mode[aria-pressed=true]{border-color:currentColor;border-width:2.5px;background:var(--card)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:7px 12px;font-size:.9rem}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bigcode{font-family:var(--mono);font-size:clamp(2.4rem,13vw,3.6rem);letter-spacing:.22em;line-height:1}
+.seats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.seat{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;border:1.5px solid var(--line);min-height:48px;min-width:0}
+.seat.empty{border-style:dashed;color:var(--muted);font-size:.85rem}
+.seat .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.dot{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;color:var(--o-ink);font-weight:800;font-size:.8rem}
+.tag{font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-left:auto;flex:none}
+.prog{display:flex;gap:5px}
+.prog i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.prog i.on{background:var(--teal)}
+.prog i.cur{background:var(--accent)}
+.qcard{display:flex;flex-direction:column;gap:6px}
+.qtext{font-family:var(--display);font-size:clamp(1.35rem,5.5vw,1.8rem);line-height:1.15;text-wrap:balance}
+.opts{display:grid;grid-template-columns:1fr;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;border-radius:12px;border:0;color:var(--o-ink);font-size:1.05rem;min-height:58px}
+.opt .lt{font-family:var(--display);font-size:1.1rem;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.22);display:grid;place-items:center;flex:none}
+.opt.o0{background:var(--o1)}.opt.o1{background:var(--o2)}.opt.o2{background:var(--o3)}.opt.o3{background:var(--o4)}
+.opt.sel{outline:4px solid var(--ink);outline-offset:2px}
+.rv-opt{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--card)}
+.rv-opt .top{display:flex;align-items:center;gap:10px;font-weight:700}
+.rv-opt .lt{font-family:var(--display);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--o-ink);flex:none}
+.rv-opt.right{border-color:var(--good);background:var(--good-bg)}
+.rv-opt.dim{opacity:.5}
+.badge{margin-left:auto;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--good);flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 3px;border-radius:999px;background:var(--bg);font-size:.82rem;font-weight:700;border:1.5px solid var(--line)}
+.pchip .dot{width:20px;height:20px;font-size:.65rem}
+.pchip.hit{border-color:var(--good)}
+.target{display:flex;align-items:center;gap:12px}
+.target .dot{width:46px;height:46px;font-size:1.2rem}
+.board{display:flex;flex-direction:column;gap:6px}
+.brow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg);font-variant-numeric:tabular-nums}
+.brow .rk{width:22px;font-weight:800;color:var(--muted);text-align:right;flex:none}
+.brow .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .pts{margin-left:auto;font-weight:800;font-size:1.1rem;flex:none}
+.brow .gain{color:var(--good);font-weight:700;font-size:.85rem;flex:none}
+.brow.me{outline:2px solid var(--accent)}
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:8px;text-align:center}
+.pod{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.pod .nm{font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .blk{width:100%;border-radius:10px 10px 0 0;display:grid;place-items:center;font-family:var(--display);font-size:1.6rem;color:var(--accent-ink);background:var(--accent)}
+.pod.p2 .blk,.pod.p3 .blk{background:var(--line);color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:6px}
+.lobbyrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg)}
+.lobbyrow .info{min-width:0;flex:1}
+.lobbyrow .info b{font-family:var(--mono);letter-spacing:.12em}
+.sumrow{display:flex;gap:10px;align-items:center;text-align:left;width:100%;padding:10px 12px;font-weight:500}
+.sumrow .lt{font-family:var(--display);width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--o-ink);flex:none}
+.sumrow .q{min-width:0;flex:1}
+.sumrow .q small{display:block;color:var(--muted)}
+.logo{display:flex;flex-direction:column;align-items:center;gap:2px;padding-block:18px 8px;user-select:none}
+.logo-top{display:flex;justify-content:center;font-family:var(--display);font-size:clamp(2.1rem,10.5vw,3.6rem);line-height:1}
+.logo-top span{display:inline-block;color:var(--c);transform:rotate(var(--r));-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:0 4px 0 var(--ink)}
+.logo-tag{font-family:var(--display);font-size:clamp(1.2rem,5.5vw,1.8rem);letter-spacing:.35em;padding:6px 10px 6px calc(10px + .35em);margin-top:10px;background:var(--accent);color:var(--accent-ink);border:2.5px solid var(--ink);border-radius:10px;transform:rotate(-3deg);box-shadow:0 4px 0 var(--ink)}
+@media (prefers-reduced-motion:no-preference){.logo-top span{animation:drop .5s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--d)}.logo-tag{animation:drop .5s .5s cubic-bezier(.2,1.5,.4,1) both}}
+@keyframes drop{from{opacity:0;transform:translateY(-24px) rotate(0)}}
+.testnote{padding:12px 14px;border-radius:10px;background:color-mix(in srgb,var(--accent) 18%,var(--card));border:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent);font-size:.92rem}
+.notice{padding:12px 14px;border-radius:10px;background:var(--bad-bg);color:var(--ink);font-size:.92rem}
+.waitlist{display:flex;flex-wrap:wrap;gap:6px}
+.finishing{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-block:18px}
+.finishing .who{display:flex;justify-content:center}
+.finishing .who .dot{width:54px;height:54px;font-size:1.3rem;border:3px solid var(--card);margin-left:-12px}
+.finishing .who .dot:first-child{margin-left:0}
+.typing{display:flex;gap:6px}
+.typing i{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.typing i{animation:bob 1.1s infinite ease-in-out}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}}
+@keyframes bob{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-6px);opacity:1}}
+.pstat{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg);font-variant-numeric:tabular-nums}
+.pstat .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pstat .st{margin-left:auto;font-weight:700;font-size:.85rem;color:var(--muted);flex:none}
+.pstat .st.ok{color:var(--good)}
+.fxwrap{position:relative;flex:none}
+.fxbtn{font-family:var(--display);font-weight:400;padding:6px 12px;border-radius:999px;background:var(--accent);color:var(--accent-ink);border:0;font-size:1rem;line-height:1.2}
+.fxbtn.scare{background:var(--ink);color:var(--bg)}
+.fxmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:8px;min-width:210px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.fxmenu .label{padding:4px 6px 6px}
+.fxmenu button{display:flex;align-items:center;gap:8px;text-align:left;padding:8px;border:0;background:none;font-weight:700;border-radius:8px}
+.fxmenu button:hover{background:var(--bg)}
+.fxmenu .dot{width:24px;height:24px;font-size:.7rem}
+#fx{position:fixed;inset:0;z-index:100;display:grid;place-items:center;pointer-events:none}
+#fx .six{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+#fx .six b{font-family:var(--display);font-weight:400;font-size:min(62vw,62vh);line-height:.85;color:var(--accent);-webkit-text-stroke:6px var(--ink);paint-order:stroke fill;text-shadow:0 12px 0 var(--ink)}
+#fx .six b{font-size:min(52vw,48vh)}
+#fx .from{display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);padding:10px 22px 10px 10px;border-radius:999px;max-width:calc(100vw - 32px);text-align:left;box-shadow:0 8px 0 var(--accent)}
+#fx .from .dot{width:clamp(48px,12vw,72px);height:clamp(48px,12vw,72px);font-size:clamp(1.4rem,6vw,2.2rem);border:3px solid var(--bg)}
+#fx .from div{min-width:0}
+#fx .from em{display:block;font-style:normal;font-family:var(--display);font-size:clamp(1.6rem,8vw,3.2rem);line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#fx .from small{display:block;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(.8rem,3vw,1rem);color:var(--accent)}
+.fxbtn .cd{font-family:var(--mono);font-size:.75rem;font-variant-numeric:tabular-nums}
+.fxbtn:disabled{opacity:.6}
+#fx.scare{background:#000}
+#fx.scare svg{width:min(100vw,100vh);height:min(100vw,100vh)}
+@media (prefers-reduced-motion:no-preference){#fx .six{animation:pop 1.9s cubic-bezier(.2,1.6,.4,1) both}#fx.scare svg{animation:lunge .5s ease-out both}}
+@keyframes pop{0%{transform:scale(.1) rotate(-25deg);opacity:0}12%{transform:scale(1.1) rotate(6deg);opacity:1}20%{transform:scale(1) rotate(-3deg)}28%,86%{transform:scale(1) rotate(0)}100%{transform:scale(1.3);opacity:0}}
+@media (prefers-reduced-motion:no-preference){#fx .six{animation-duration:3s}}
+@keyframes lunge{0%{transform:scale(.7)}100%{transform:scale(1.25)}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;max-width:calc(100% - 32px)}
+.hero-sub{font-size:1.05rem;color:var(--muted);max-width:44ch}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.steps div{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:10px;font-size:.85rem}
+.steps b{display:block;font-family:var(--display);font-weight:400;font-size:1rem}
+@media (max-width:420px){.steps{grid-template-columns:1fr}.seats{grid-template-columns:1fr}}
+/* ---- player-themed screens: the page takes on the color of whoever the questions are about ---- */
+html.themed body{background:color-mix(in srgb,var(--pc) var(--tint),var(--bg))}
+body{transition:background-color .45s ease}
+.bar:has(.menubtn){flex-wrap:nowrap;align-items:flex-start}
+.bar .chips-row{display:flex;gap:6px;flex-wrap:wrap;min-width:0;flex:1}
+.bar .chips-row .chip{padding:5px 10px}
+.bar .fxbtn,.bar .menubtn{flex:none}
+.menubtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--card);font-size:.85rem}
+.menubtn .mtxt{display:inline}
+@media (max-width:460px){.menubtn .mtxt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.menubtn{padding:9px 11px}}
+.menubtn .burger{display:grid;gap:3px}
+.menubtn .burger i{display:block;width:14px;height:2px;border-radius:2px;background:currentColor}
+.friends{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.friends .dot{width:30px;height:30px;font-size:.8rem;opacity:.35;transition:opacity .2s,transform .2s}
+.friends .dot.done{opacity:.9}
+.friends .dot.now{opacity:1;transform:scale(1.15);box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--pc)}
+.friends .lbl{font-size:.8rem;font-weight:700;color:var(--muted);margin-left:4px}
+.qbox{background:var(--card);border-radius:22px;overflow:hidden;box-shadow:0 1px 0 color-mix(in srgb,var(--pc) 25%,transparent),0 14px 34px -18px color-mix(in srgb,var(--pc) 70%,transparent)}
+.qhead{background:var(--pc);color:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px}
+.qhead .dot{width:44px;height:44px;font-size:1.15rem;background:rgba(255,255,255,.22)!important;border:2.5px solid #fff}
+.qhead .who{min-width:0;flex:1}
+.qhead .eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.qhead .nm{font-family:var(--display);font-size:1.25rem;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qhead .nm.solo{font-size:clamp(1.15rem,5.2vw,1.5rem);text-transform:uppercase;letter-spacing:.03em;white-space:normal;overflow:visible}
+.qhead .count{font-family:var(--mono);font-size:.9rem;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:999px;flex:none;font-variant-numeric:tabular-nums}
+.qdots{display:flex;gap:5px;padding:12px 18px 0}
+.qdots i{flex:1;height:5px;border-radius:3px;background:color-mix(in srgb,var(--pc) 16%,var(--card))}
+.qdots i.on{background:color-mix(in srgb,var(--pc) 55%,var(--card))}
+.qdots i.cur{background:var(--pc)}
+.qbody{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.qtext{font-family:var(--display);font-size:clamp(1.3rem,5.4vw,1.7rem);line-height:1.18;text-wrap:balance}
+.qhint{color:var(--muted);font-size:.9rem;margin-top:-6px}
+.opts{display:grid;grid-template-columns:1fr;gap:9px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:14px;min-height:56px;font-size:1.02rem;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--pc) var(--soft),var(--card));border:2px solid color-mix(in srgb,var(--pc) 22%,transparent);transition:border-color .15s,background-color .15s,transform .08s}
+.opt:hover{border-color:var(--pc)}
+.opt .lt{font-family:var(--display);font-size:1rem;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--pc) 16%,var(--card));color:var(--pc)}
+.opt.sel{background:var(--pc);border-color:var(--pc);color:#fff}
+.opt.sel .lt{background:rgba(255,255,255,.25);color:#fff}
+.opt:active{transform:scale(.985)}
+.qfoot{display:flex;justify-content:space-between;align-items:center;min-height:24px}
+.intro{background:var(--pc);color:#fff;border-radius:24px;padding:30px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;box-shadow:0 18px 40px -20px var(--pc)}
+.intro .dot{width:84px;height:84px;font-size:2.2rem;background:rgba(255,255,255,.2)!important;border:3px solid #fff}
+.intro .eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.intro .big{font-family:var(--display);font-size:clamp(2rem,10vw,2.8rem);line-height:1;max-width:100%;overflow-wrap:anywhere}
+.intro p{opacity:.9;max-width:32ch}
+.intro button{background:#fff;color:var(--pc);border:0;font-size:1.05rem;padding:13px 28px;border-radius:999px;margin-top:6px}
+.sumrow .lt{background:var(--pc)!important}
+.rv-opt .lt{background:var(--pc)!important}
+.sheet-bg{position:fixed;inset:0;z-index:60;background:rgba(10,20,18,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--card);color:var(--ink);border-radius:20px;width:100%;max-width:440px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+@media (min-width:600px){.sheet-bg{align-items:center}}
+.sheet h2{font-size:1.2rem}
+.sheet .mi{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;padding:15px 14px;font-size:1.05rem;border-radius:12px;background:var(--bg)}
+.sheet .mi small{font-weight:500;color:var(--muted);font-size:.85rem}
+.sheet .mi.warn{border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.sheet .mi.warn.armed{background:var(--bad);border-color:var(--bad);color:#fff}
+.sheet .mi.warn.armed small{color:#fff}
+.sheet .mi.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.sheet .mi.go small{color:var(--accent-ink);opacity:.8}
+.sheet .mi.go.armed{background:var(--ink);color:var(--bg)}
+.sheet .mi.go.armed small{color:var(--bg)}
+@media (prefers-reduced-motion:no-preference){
+  .qbox.enter{animation:qin .32s cubic-bezier(.2,.9,.3,1.15) both}
+  .intro.enter{animation:qin .4s cubic-bezier(.2,.9,.3,1.2) both}
+  .sheet.enter{animation:qin .22s ease-out both}
+}
+@keyframes qin{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<main id="app"></main>
+<div id="sheet"></div>
+<div class="toast" id="toast" hidden></div>
+<div id="fx" hidden></div>
+
+
+<script>
+const BANK={
+easy:`What's your favorite season?|Spring|Summer|Fall|Winter
+Which color would you paint your room?|Deep blue|Forest green|Warm orange|Soft pink
+Pick a pizza topping.|Extra cheese|Mushrooms|Pineapple|Peppers and onions
+Morning person or night owl?|Up at sunrise|Mostly mornings|Mostly nights|3am gremlin
+Best way to spend a free Saturday?|Outdoors|Out with friends|Gaming or a show marathon|Sleeping in
+Cats or dogs?|Dogs, easily|Cats, easily|Leaning dogs|Leaning cats
+Go-to coffee shop order?|Hot coffee|Iced sweet drink|Tea|Smoothie or hot chocolate
+Favorite meal of the day?|Breakfast|Lunch|Dinner|Late-night snack
+Pick a getaway.|Beach|Mountains|Big city|Lake cabin
+Favorite movie genre?|Comedy|Action|Horror|Romance or drama
+Sweet, salty, spicy or sour?|Sweet|Salty|Spicy|Sour
+Favorite fast food spot?|Chick-fil-A|McDonald's|Chipotle|Taco Bell
+How do you like your eggs?|Scrambled|Fried|Boiled|Omelet
+What's playing in your car?|Hip-hop or rap|Pop|Rock or country|Podcasts
+Hot weather or cold weather?|Hot|Warm|Cool|Cold
+Favorite ice cream flavor?|Chocolate|Vanilla|Cookies and cream|Something fruity
+Which superpower would you pick?|Flying|Invisibility|Teleporting|Reading minds
+Your phone battery usually sits at?|Above 80%|Around 50%|Under 20%|Glued to the charger
+Favorite sport to watch?|Football|Basketball|Soccer|Baseball
+What would you name a new pet?|A human name, like Steve|A food name, like Nugget|Something cute, like Bubbles|Something epic, like Thor
+Where do you sit on a plane?|Window|Aisle|As close to the front as possible|Exit row for the legroom
+Your texting style?|Full sentences|lowercase no punctuation|Emojis everywhere|Voice memos
+Favorite type of food?|Mexican|Italian|Asian|Burgers and BBQ
+Favorite kind of candy?|Chocolate|Gummies|Sour candy|Mints
+Pick a breakfast.|Pancakes or waffles|Eggs and toast|Cereal|Breakfast burrito
+Favorite day of the week?|Friday|Saturday|Sunday|A weekday, weirdly
+Favorite kind of game?|Video games|Board games|Card games|Sports
+Pick a dinner.|Burgers|Sushi|Tacos|Pasta
+How spicy do you go?|Call the fire department|Hot|Medium|Mild
+Favorite time of day?|Sunrise|Midday|Sunset|Midnight
+Favorite fruit?|Strawberries|Mango|Watermelon|Grapes
+Rainy day plan?|Movies under a blanket|Nap|Go out anyway|Cook or bake
+Favorite pasta?|Spaghetti|Penne|Mac and cheese|Ravioli
+Pick a chip flavor.|Classic salted|Barbecue|Sour cream and onion|Flamin' Hot
+Pick a fry.|Regular fries|Curly fries|Waffle fries|Tater tots
+Favorite dipping sauce?|Ranch|Ketchup|Honey mustard|Buffalo
+Dream car color?|Black|White|Red|Blue
+Favorite animal at the zoo?|Big cats|Monkeys|Penguins|Elephants
+Which ocean animal are you?|Dolphin|Shark|Octopus|Sea turtle
+Pick a cereal.|Cinnamon Toast Crunch|Frosted Flakes|Froot Loops|Honey Nut Cheerios
+Favorite dessert?|Cake|Cookies|Pie|Ice cream
+Favorite cake flavor?|Chocolate|Vanilla|Red velvet|Carrot cake
+Favorite soda?|Coke|Sprite|Dr Pepper|Root beer
+Favorite pizza style?|Thin crust|Deep dish|New York slice|Stuffed crust
+Favorite sandwich?|Grilled cheese|Chicken sandwich|Sub with everything|PB&J
+How do you build a burger?|Simple, cheese only|Loaded with everything|Double stacked|Spicy with jalapeños
+Pick a dip for chips.|Salsa|Queso|Guacamole|French onion dip
+Favorite place to get breakfast out?|Diner|Café|Drive-thru|Brunch spot
+Favorite weather?|Sunny and hot|Cool and breezy|Rainy|Snowy
+Favorite kind of music?|Hip-hop|Pop|Rock|Latin
+Pick a vacation.|Tropical beach|European city|National park|Theme park
+Pick a theme park ride.|Biggest roller coaster|Drop tower|Water ride|Bumper cars
+Best thing about summer?|Pool days|Long nights|Cookouts|Vacations
+Best thing about winter?|Snow days|Cozy blankets|Hot drinks|Time off
+Best thing about fall?|The leaves|Hoodie weather|Football season|Pumpkin everything
+Best thing about spring?|Flowers|Warmer days|More daylight|Fresh start energy
+Which pet would you get?|Dog|Cat|Reptile|Bird
+Pick a dog size.|Giant|Medium|Small|Tiny enough for a pocket
+Favorite board game?|Monopoly|Uno|Scrabble|Clue
+Favorite type of shoe?|Sneakers|Slides|Boots|Running shoes
+What do you grab when it's chilly?|Hoodie|Jean jacket|Puffer|Windbreaker
+Socks at bedtime?|On all night|Only when it's cold|Kicked off by morning|Barefoot all the way
+When do you shower?|Morning|Night|After the gym|Whenever I get a chance
+How long are your showers?|Under 5 minutes|5 to 10 minutes|10 to 20 minutes|Full concert length
+What's your sleep position?|Back|Side|Stomach|Starfish
+How many pillows do you sleep with?|One|Two|Three|A whole fortress
+What helps you sleep?|A fan on|Total silence|White noise|A show playing
+How many alarms do you set?|One|Two or three|Five or more|I wake up on my own
+Favorite emoji?|😂|💀|❤️|👍
+Favorite app?|Instagram|TikTok|YouTube|Snapchat
+Movie theater snack?|Popcorn|Candy|Nachos|Pretzel bites
+How do you like your popcorn?|Extra butter|Lightly salted|Kettle corn|Caramel
+Favorite chocolate bar?|Reese's|Snickers|KitKat|Twix
+Favorite cookie?|Chocolate chip|Oreo|Sugar cookie|Oatmeal raisin
+Favorite donut?|Glazed|Chocolate frosted|Sprinkles|Boston cream
+Favorite morning drink?|Orange juice|Coffee|Milk|Smoothie
+Favorite way to eat potatoes?|Fries|Mashed|Baked|Hash browns
+Favorite Mexican dish?|Tacos|Burrito|Quesadilla|Nachos
+Favorite Asian dish?|Sushi|Ramen|Fried rice|Dumplings
+How do you like your chicken?|Wings|Tenders|Nuggets|Grilled
+Pick a wing flavor.|Buffalo|BBQ|Lemon pepper|Honey garlic
+Which subscription could you not lose?|Netflix|YouTube Premium|Disney+|Spotify
+Favorite school subject?|Math|English|Science|History
+Best gym class activity?|Dodgeball|Running|Basketball|Free play
+What does your phone case look like?|Black|Clear|A bold color|Something with a design
+Favorite sneaker brand?|Nike|Adidas|New Balance|Vans
+Favorite bread?|Sourdough|White|Wheat|Bagel
+Favorite cheese?|Cheddar|Mozzarella|Pepper jack|Parmesan
+Favorite drink with dinner?|Water|Soda|Juice|Lemonade
+Favorite gum flavor?|Peppermint|Spearmint|Bubblegum|Fruit
+Pick a pizza sauce.|Classic red|White garlic|BBQ|Pesto
+Favorite way to watch a movie?|In theaters|On the couch|In bed|On my phone
+What do you watch on YouTube?|Comedy|Sports highlights|Cooking|Gaming
+Favorite outdoor activity?|Hiking|Swimming|Biking|Fishing
+Favorite indoor activity?|Gaming|Watching shows|Reading|Cooking
+Pick a water day.|Pool|Ocean waves|Lake kayaking|Water park
+Where in space would you go?|The Moon|Mars|Saturn's rings|Near a black hole
+Favorite flower?|Roses|Sunflowers|Tulips|Daisies
+Favorite smell?|Fresh laundry|Rain|Coffee|Baking cookies
+Favorite sound?|Rain on the roof|Ocean waves|Crackling fire|Birds in the morning
+Pick a lucky number.|3|7|13|23
+Favorite candle scent?|Vanilla|Pine|Ocean breeze|Cinnamon
+Favorite salad dressing?|Ranch|Caesar|Balsamic|Honey mustard
+Pick a fictional world to live in.|Hogwarts|The Pokémon world|The Marvel universe|The Star Wars galaxy
+Favorite cartoon as a kid?|SpongeBob|Pokémon|Scooby-Doo|Avatar: The Last Airbender
+Favorite Disney or Pixar movie?|The Lion King|Toy Story|Frozen|Finding Nemo
+Favorite superhero?|Spider-Man|Batman|Iron Man|Black Panther
+Pick a Pokémon starter type.|Fire|Water|Grass|Pikachu, obviously
+Favorite video game series?|Mario|Call of Duty|Minecraft|Pokémon
+Which gaming team?|PlayStation|Xbox|Nintendo|PC
+iPhone or Android?|iPhone|Android|iPhone, only for the group chat|Android, and proud of it
+Main device?|Laptop|Desktop|Tablet|My phone does everything
+Light mode or dark mode?|Dark mode|Light mode|Auto switch|Warm night mode
+Favorite hat?|Baseball cap|Beanie|Bucket hat|Cowboy hat
+Most of your closet is?|Black|White|Gray|Bright colors
+Pick a road trip snack.|Chips|Candy|Jerky|Gas station hot food
+Pick an ice cream topping.|Sprinkles|Hot fudge|Oreo crumbs|Caramel
+How do you get your ice cream?|Waffle cone|Cup|Sugar cone|Milkshake
+Pick a party theme.|Costume party|Game night|Pool party|Karaoke night
+Favorite pastry?|Croissant|Muffin|Cinnamon roll|Danish
+Coffee run, where to?|Starbucks|Dunkin'|A local café|Gas station coffee
+Gas station loyalty?|Wawa|Sheetz|7-Eleven|Buc-ee's
+Favorite grocery store?|Trader Joe's|Costco|Wegmans|Target
+Shoes in the house?|Off at the door|Shoes on|Slippers|Socks only
+Favorite way to get around?|Car|Bike|Walking|Scooter
+How do you take notes?|Notes app|Paper notebook|Texting myself|Voice memos
+How many browser tabs are open right now?|Under 5|5 to 15|15 to 50|Lost count
+What's your phone wallpaper?|Photo of people|A pet|Nature|Something funny
+Pick a camping style.|Tent in the woods|RV|Cabin|Glamping
+Favorite fruit juice?|Apple|Orange|Grape|Cranberry
+Favorite holiday treat?|Hot chocolate|Cookies|Pie|Candy
+Favorite pizza chain?|Domino's|Papa John's|Pizza Hut|A local spot
+Favorite sushi pick?|California roll|Spicy tuna|Salmon nigiri|Tempura roll
+How do you like your toast?|Barely toasted|Golden|Dark|A little burnt
+Favorite noodle?|Ramen|Lo mein|Pad thai|Spaghetti
+Favorite color of all time?|Blue|Green|Red|Purple
+Pick a hobby to pick up.|Guitar|Painting|Rock climbing|Photography
+Favorite kind of TV show?|Sitcom|Crime drama|Reality TV|Anime
+Pick a sea creature to pet.|Stingray|Dolphin|Seal|Starfish
+Favorite farm animal?|Cow|Horse|Goat|Pig
+Pick a bird.|Owl|Eagle|Parrot|Penguin
+Favorite pie?|Apple|Pumpkin|Key lime|Cherry
+Favorite Olympic sport to watch?|Gymnastics|Swimming|Track|Snowboarding
+Pick a mini golf hole.|The windmill|The loop-de-loop|The volcano|The water hazard`,
+medium:`How fast do you reply to texts?|Instantly|Within the hour|Same day|A few days later
+Would you rather be...?|Famous|Rich|Super smart|Super good looking
+What do you splurge on?|Food and going out|Clothes and shoes|Tech and gadgets|Travel
+How early do you show up?|Way early|Right on time|5 to 10 minutes late|Very late
+Which chore do you hate most?|Dishes|Laundry|Cleaning the bathroom|Taking out the trash
+Your role in a group project?|The leader|The worker bee|The idea person|Shows up for the presentation
+How clean is your car right now?|Spotless|A little lived-in|Pretty messy|Archaeological dig site
+You win $10k today. First move?|Save or invest it|Book a big trip|Shopping spree|Pay something off
+Your role in a zombie apocalypse?|The leader|The hider|The looter|First one to go
+What do you do when stressed?|Clean everything|Eat|Sleep|Talk it out
+Which decade would you live in?|The '70s|The '80s|The '90s|The 2000s
+A spider is in your room. You?|Squish it|Catch and release|Yell for help|Leave the room forever
+How many unread emails do you have?|Under 10|10 to 100|100 to 1,000|1,000+
+What are you doing on a long drive?|Singing loud|Deep talks|Sleeping|Controlling the aux
+Daily phone screen time?|Under 2 hours|2 to 4 hours|4 to 6 hours|6+ hours
+Which time trip would you take?|Visit the past|Visit the future|Redo last year|Skip ahead 10 years
+Which reality show would you crush?|Survivor|The Amazing Race|A cooking competition|Big Brother
+How do you pick a restaurant?|I already have my spot|Read reviews forever|Let someone else decide|Whatever's closest
+Where are you at a party?|The kitchen|The dance floor|On the couch with the pet|By the snacks
+Biggest pet peeve?|Loud chewing|People being late|Slow walkers|Bad drivers
+Best way to cheer you up?|Food|Hang out with me|A surprise|Make me laugh
+How often do you work out?|Almost daily|A few times a week|When I feel guilty|Once in a blue moon
+Plans get canceled. You feel?|Relieved|Annoyed|Sad|Already have a backup plan
+Which would you give up for a year?|Social media|Fast food|Music|Streaming shows
+How do you pack for a trip?|Days early with a list|The night before|The morning of|Basically at the airport
+Which would you explore?|Outer space|The deep ocean|Antarctica|An ancient jungle
+Your group chat style?|Always active|Silent lurker|It's on mute|Memes only
+Your karaoke pick?|Power ballad|A rap verse|A duet|Group singalong
+How competitive are you?|Extremely|Pretty competitive|Here for fun|A sore loser, honestly
+Your camera roll is mostly?|Selfies|Food|Screenshots|Pets or nature
+How spontaneous are you?|I plan everything|I plan a little|Go with the flow|Pure chaos
+Which would you rather lose for a week?|Phone|Wallet|Car keys|Laptop
+You get a bad haircut. You?|Hat for weeks|Own it|Buzz it all off|Go back and complain
+Which job sounds most fun?|Chef|Pilot|Game designer|Park ranger
+Your streaming habit?|Rewatch favorites|Always something new|Scroll for an hour|Asleep 10 minutes in
+First thing you do when you get home?|Change clothes|Snack|Lie down|Scroll my phone
+Which would you give up forever?|Pizza|Burgers|Chocolate|Cheese
+Pick something free for life.|Food|Travel|Shopping|Gas
+Pick a bonus skill.|Talk to animals|Speak every language|Play every instrument|Master every sport
+Which would you rather fight?|One horse-sized duck|100 duck-sized horses|An angry goose|A kangaroo
+Pick a hidden talent.|Singing|Juggling|Perfect impressions|Speed cooking
+You're stuck in a long line. You?|Wait it out|Leave|Complain quietly|Make friends with the line
+How do you eat an Oreo?|Twist it open|Dunk it in milk|One whole bite|Scrape the cream off
+How do you load a dishwasher?|Perfect system|Whatever fits|Hand wash instead|Pile it in and pray
+How many times do you hit snooze?|Zero|Once|Three times|Until I'm late
+When you catch a cold?|Push through|Full bed rest|Soup and shows|Dramatic suffering
+Texting or calling?|Texting|Calling|Voice memos|FaceTime
+Someone texts "we need to talk." You?|Panic|Stay calm|Reply "about what?" immediately|Reread every text I've sent
+How do you shop?|Online|In store|Thrifting|Window shopping
+What's in your fridge right now?|Fully stocked|Condiments only|Leftovers|Drinks and snacks
+How good of a cook are you?|Chef level|Solid home cook|Basics only|Microwave master
+Someone compliments you. You?|Say thanks|Deflect it|Compliment them back|Get awkward
+Which would you rather win?|An Olympic medal|An Oscar|A Grammy|A Nobel Prize
+Dream house?|Modern city loft|Farmhouse|Beach house|Mountain cabin
+How often do you clean your room?|Daily|Weekly|When guests are coming|When I can't find stuff
+How do you spend a long flight?|Sleeping|Movies|Talking to my neighbor|Working or reading
+How do you split the check?|Pay for everyone|Split evenly|Pay exactly mine|Venmo later and forget
+Your weekend mode?|Plans every hour|One plan|Fully spontaneous|Recharge at home
+Your sleep schedule?|Very consistent|Pretty normal|All over the place|Nocturnal
+Last-minute plans?|Love them|Sometimes|Need a heads-up|Hate them
+In the friend group, you're the...?|Driver|Planner|Funny one|Late one
+Your handwriting?|Neat|Readable|Doctor-level messy|Only I can read it
+How do you order at a restaurant?|Same thing every time|Try something new|Ask the server|Order last after hearing everyone
+How do you feel about haggling?|Love it|Only if needed|Too awkward|Send someone else
+Which would you rather be the best at?|A sport|An instrument|A video game|Cooking
+Which animal matches your energy?|Lion|Owl|Dolphin|Sloth
+How messy is your desk?|Spotless|Organized chaos|Pure chaos|Covered in cups
+In 10 years you're most likely...?|Running a business|Traveling the world|Settled down|Famous on the internet
+Your phone volume?|Always on silent|Vibrate|Ringer on loud|Do Not Disturb all day
+How long to get ready to go out?|Under 10 minutes|About 20 minutes|About an hour|Over an hour
+Which could you live without?|Music|Movies|Video games|Sports
+Ideal Friday night?|Big night out|Dinner with friends|Gaming|Movie at home
+How do you shake off a bad mood?|Music|Workout|Sleep it off|Talk to someone
+How do you eat pizza?|Crust first|Fold it|Knife and fork|Tip first, like a normal person
+Which emoji do you overuse?|😂|💀|😭|👀
+When do you charge your phone?|Overnight|When it's low|All day|Power bank always
+The server says "enjoy your meal." You?|Say "you too" by accident|Say thanks|Just nod|Already eating
+Pick a dream job perk.|Unlimited vacation|Work from anywhere|Free food|Huge bonus
+Pick a personal assistant.|Chef|Driver|Trainer|Stylist
+Which sense would you upgrade?|Sight|Hearing|Taste|Smell
+What happens in your shower?|Deep thoughts|Full concert|Arguing with myself|Planning my day
+How many pairs of shoes do you own?|Under 5|5 to 10|10 to 20|20+
+Biggest car pet peeve?|Loud music|Bad driving|Messy car|Backseat drivers
+Where do you sit at the movies?|Back row|Middle|Front|Aisle
+How do you handle spoilers?|Hate them|Don't mind them|Look them up myself|Spoil things for others
+How fast do you walk?|Speed walker|Normal pace|Slow stroller|Stops for everything
+Pineapple on pizza?|Love it|It's fine|Gross|Should be illegal
+Cereal or milk first?|Cereal first|Milk first|Dry cereal|Pour as I go
+Is a hot dog a sandwich?|Yes|No|It's a taco|It's its own thing
+What are you drinking at a party?|Beer|Mixed drink|Seltzer|Soda
+Pick a night out.|Bar|House party|Club|Backyard bonfire
+What would you want more of?|Free time|Money|Sleep|Friends
+How do you learn something new?|YouTube|Trial and error|Ask someone|Read about it
+How many unread texts do you have?|Zero|A few|Dozens|Hundreds
+Your go-to excuse to leave early?|Early morning tomorrow|Not feeling great|Pet needs me|Irish goodbye, no excuse
+How do you handle a wrong food order?|Send it back|Eat it anyway|Complain to my friends|Leave a review
+What's your road trip role?|Driver|DJ|Navigator|Snack manager
+You find $100 on the ground. You?|Keep it|Turn it in|Treat my friends|Save it
+How do you answer an unknown number?|Pick up|Let it ring|Text back "who's this?"|Look it up first
+Which would you rather have?|Endless energy|Perfect memory|Never get lost|Never get sick
+Pick a theme park role.|Ride every coaster|Eat everything|Hold the bags|Plan the route
+How do you watch sports?|At the game|At a bar|At home with friends|Highlights on my phone
+What's your pace at a buffet?|One careful plate|Three full rounds|Straight to dessert|Sample everything
+How do you study or prep?|Weeks ahead|Night before|Morning of|Wing it
+Your pick for a group trip?|Beach house|Ski cabin|City Airbnb|Road trip
+What's your hype song energy?|Rap|Rock|EDM|Throwback pop
+How long can you go without your phone?|An hour|A few hours|A full day|A week
+What's your laugh like?|Loud|Silent shaking|Snorting|Contagious
+How many cups of coffee a day?|One|Two|Three|Four or more
+What's the first app you open in the morning?|Messages|Instagram|TikTok|Email
+How do you handle a big purchase?|Research for weeks|Ask friends|Buy it fast|Wait for a sale
+Pick a game night game.|Poker|Uno|Charades|Mafia`,
+hard:`What matters most in a friend?|Loyalty|Humor|Honesty|Always showing up
+How do you show someone you care?|Telling them|Doing things for them|Gifts|Spending time with them
+What do you want most in five years?|Financial freedom|A family|A big career win|Adventure and travel
+How do you handle conflict?|Address it head on|Cool off first|Avoid it|Joke it away
+What would you tell your younger self?|Take more risks|Work harder|Save more money|Relax, it works out
+Biggest motivator?|Money|Making family proud|Proving people wrong|Personal growth
+When you're down, you want?|Company|Space|A distraction|One person to talk to
+What are you most proud of?|Career or school|My friendships|A personal comeback|Something I built
+Which compliment means the most?|You're smart|You're funny|You're kind|You're reliable
+How do you make big decisions?|Gut feeling|Pros and cons list|Ask people I trust|Sleep on it
+What do you want more of?|Time|Money|Confidence|Close friends
+What do people misunderstand about you?|I'm more sensitive than I look|I'm less confident than I seem|I care more than I show|I'm not mad, that's just my face
+What drains your energy most?|Big crowds|Drama|Boredom|Work stress
+Where would you most want to live?|A big city|A small town|By the beach|Another country
+What were you like as a teenager?|Class clown|The quiet one|The athlete|The rebel
+Your perfect last day on Earth?|With family|A huge party|Somewhere beautiful|Eating everything
+What would make you quit your job tomorrow?|A bad boss|Way more money elsewhere|A dream opportunity|Winning the lottery
+Your relationship with money?|Saver|Spender|Investor|Avoids checking the balance
+Your role in your family?|The peacemaker|The responsible one|The funny one|The wild card
+Which fear would you erase?|Public speaking|Rejection|Failure|Heights
+What gives you the most peace?|Nature|Music|Alone time|Being with my people
+What legacy do you want to leave?|A successful business|A close family|Helping others|Being remembered as fun
+If money didn't matter, you'd...?|Travel the world|Start a business|Help people|Finally rest
+What's hardest for you?|Saying sorry|Saying no|Asking for help|Saying how I feel
+Childhood dream job?|Pro athlete|Doctor or vet|Astronaut or pilot|Artist or musician
+How do you feel about change?|Love it|I'm okay with it|I need time|Hate it
+Happiest time of your life?|Childhood|High school|Right now|It's still coming
+What do you overthink most?|Texts I sent|Money|The future|What people think of me
+What makes you lose respect for someone?|Lying|Being rude to staff|Being fake|Talking behind backs
+How do you want this group to remember you?|The funny one|The reliable one|The wild one|The wise one
+Would you restart in a new city?|Yes, tomorrow|Maybe someday|Only for a big reason|I'm staying put
+Who hears your big news first?|A parent|My best friend|The group chat|Everyone, I post it
+How do you recharge after a hard week?|Alone time|A night out|Sleep|A workout
+How do you apologize?|Say it directly|Make it up with actions|Write a long text|Act like nothing happened
+When you're angry, you...?|Go quiet|Get loud|Vent to someone|Work it off
+When you like someone, you...?|Tell them|Drop hints|Act weird around them|Wait for them to make a move
+What would you rather be known for?|Kindness|Intelligence|Humor|Success
+What do you bring to the group?|The plans|The laughs|The advice|The honesty
+How do you handle being wrong?|Admit it fast|Need a minute|Argue a little first|Rarely admit it
+What would you do with a free year?|Travel|Learn a skill|Build something|Rest
+Which age would you go back to?|Early childhood|Middle school|High school|The last few years
+What advice do you give the most?|Just do it|Think it through|Don't stress about it|Cut them off
+How do you handle a secret?|Total vault|Tell one person|Spill eventually|Forget it immediately
+Introvert or extrovert?|Full introvert|Mostly introvert|Mostly extrovert|Full extrovert
+What makes you feel most accomplished?|A hard workout|Crushing it at work|Helping someone|Making something
+First impression people get of you?|Quiet|Loud|Intimidating|Friendly
+What's most likely to make you tear up?|Movies|Animal videos|Music|Sports moments
+In a crisis, your friends call you because you're...?|The calm one|The fixer|The hype person|The comic relief
+Biggest guilty pleasure?|Junk food|Reality TV|Online shopping|Sleeping in
+Which habit would you drop?|Phone scrolling|Procrastinating|Staying up late|Impulse buying
+What's your love language?|Words of affirmation|Acts of service|Quality time|Gifts
+What do you need most from friends?|Loyalty|Honesty|Fun|Support
+What kind of old person will you be?|Grumpy|Adventurous|Sweet and calm|Still partying
+What's your biggest everyday fear?|Heights|The dark|Deep water|Bugs
+What's your hidden side?|Soft|Super competitive|Nerdy|Wild
+How do you react to a surprise party?|Love it|Awkward smile|Cry happy tears|Secretly hate it
+Would you rather be...?|Liked|Respected|Feared|Admired
+What's your biggest flex?|My car|My knowledge|My friends|My work ethic
+Your ideal life pace?|Fast and busy|Steady|Slow and chill|Bursts of chaos
+What makes a place feel like home?|Family|Food|Familiar places|Certain people
+How do you show you're upset?|Go quiet|Short texts|Say it straight|Vent to someone else
+Biggest goal this year?|Get fit|Save money|Travel|Level up at work
+When you're sick, you want...?|To be left alone|Someone to bring soup|Company|Memes and texts
+What drives your choices most?|Logic|Feelings|Other people's opinions|Gut instinct
+Your type of humor?|Sarcastic|Dark|Goofy|Dry
+What would you sacrifice for success?|Sleep|Free time|Money now|Comfort
+How do you handle being left out?|Shrug it off|Say something|Feel it quietly|Make my own plans
+Which skill would you master instantly?|An instrument|A language|A sport|Cooking
+How do you handle pressure?|Thrive|Stay steady|Freeze up|Procrastinate, then panic
+What do you notice first about a person?|Their smile|Their eyes|Their style|Their energy
+Your comfort movie type?|Comedy|Animated|Action|Romance
+What kind of friend are you at 2am?|Picks up the call|Answers in the morning|Shows up in person|Sends memes
+Which word fits you best?|Loyal|Funny|Driven|Chill
+How do you handle a bad day?|Talk about it|Keep it inside|Treat myself|Go to bed early
+Dream retirement?|On a beach|Always traveling|On a farm|Still working
+What do you value most?|Freedom|Stability|Adventure|Comfort
+Surprise day off. You...?|Sleep in|Go on an adventure|Run errands|See friends
+Which power fits your personality?|Super speed|Mind reading|Shapeshifting|Invisibility
+How do you take criticism?|Use it|Defend myself|Overthink it|Shrug it off
+Your role when friends argue?|The mediator|Picks a side|Stays out of it|Cracks jokes
+How do you celebrate a win?|Go out|Treat myself|Tell everyone|Keep it quiet
+How long do you hold a grudge?|Minutes|Days|Months|Forever
+Biggest dream purchase?|A house|A car|A trip around the world|A business
+Most important room in a home?|Kitchen|Bedroom|Backyard|Living room
+How do you handle a new group of people?|Talk to everyone|Find one person|Stick with who I know|Wait for them to come to me
+What are you most stubborn about?|My opinions|My routines|My taste in food|Winning arguments
+How do you feel about being the center of attention?|Love it|It's fine|Uncomfortable|Avoid it at all costs
+What would make your perfect birthday?|Big party|Small dinner|A trip|Low-key day
+How do you deal with jealousy?|Admit it|Hide it|Use it as fuel|Talk it out
+What's your biggest strength?|Patience|Creativity|Work ethic|Humor
+What's your biggest weakness?|Impatience|Procrastination|Overthinking|Stubbornness
+What do you daydream about most?|Money|Travel|Love|Success
+How do you make friends?|Through work or school|Through other friends|Through hobbies|I just talk to people
+How do you handle goodbyes?|Quick and easy|Long hugs|Get emotional|Avoid them`};
+const QS={};for(const k in BANK)QS[k]=BANK[k].trim().split('\n').map(l=>{const[q,...o]=l.split('|');return{q,o}});
+const MODES={easy:{name:'Easy',desc:'Favorites and quick picks: seasons, food, pets.'},medium:{name:'Medium',desc:'Habits, opinions and would-you-rathers.'},hard:{name:'Hard',desc:'The deeper stuff: fears, values, what drives them.'}};
+const LET=['A','B','C','D'];
+const MAXP=10;
+
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const rand=n=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let s='';for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clean=s=>String(s||'').replace(/[\u0000-\u001f​-‏‪-‮⁠-⁯]/g,'').trim().slice(0,18);
+
+const ss={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}};
+let me={pid:ss.get('wkw.pid')||rand(8),name:clean(ls.get('wkw.name')||'')};ss.set('wkw.pid',me.pid);
+let room=null,roomState='connecting',game=null,code=null,hs=null,lastH=null,lastOpen='';
+let pickMode='easy';
+let local={r:-1,a:[],g:{},ai:0,gi:0,seen:{}};
+let toastT=null;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+
+/* ---------- room data ---------- */
+function gpeers(){try{return game?game.peers():[]}catch(e){return[]}}
+function players(){const m={};for(const p of gpeers()){const pr=p.presence||{};if(typeof pr.pid!=='string'||!pr.n||pr.pid.startsWith('bot'))continue;if(!m[pr.pid]||(p.sameTab))m[pr.pid]={peer:p,pr}}
+  const H=curH();if(H&&Array.isArray(H.bots))H.bots.forEach(([pid,n],i)=>{if(typeof pid!=='string'||!pid.startsWith('bot'))return;m[pid]={peer:{sameTab:false,presence:{}},pr:{pid,n,bot:true,j:1e15+i,s:{r:H.id,a:(H.ba||{})[pid]},g:{r:H.id,t:(H.bg||{})[pid]||{}}}}});
+  return m}
+const BOTNAMES=['Ava','Rex','Milo','Luna','Zed','Nova','Ollie','Pip','Juno'];
+function rndAns(n){let s='';for(let i=0;i<n;i++)s+=Math.floor(Math.random()*4);return s}
+function botAnswers(){hs.ba={};for(const [pid] of hs.bots||[])hs.ba[pid]=rndAns(hs.q.length)}
+function botGuesses(){hs.bg={};for(const [pid] of hs.bots||[]){const t={};for(const tg of hs.tg){if(tg===pid)continue;let s='';for(let i=0;i<hs.q.length;i++)s+=Math.random()<.4?hs.ans[tg][i]:Math.floor(Math.random()*4);t[tg]=s}hs.bg[pid]=t}}
+function hostInfo(){let best=null;for(const p of gpeers()){const h=p.presence&&p.presence.h;if(!h||typeof h!=='object'||h.code!==code)continue;if(!best||(h.t||0)>(best.h.t||0))best={peer:p,h}}return best}
+function curH(){const hi=hostInfo();if(hi&&hi.peer.sameTab&&hs)return hs;return hi?hi.h:null}
+function amHost(){const hi=hostInfo();return !!(hs&&hi&&hi.peer.sameTab)}
+function rosterLive(){const pl=Object.values(players()).sort((a,b)=>(a.pr.j||0)-(b.pr.j||0)).slice(0,MAXP);return pl.map(x=>[x.pr.pid,clean(x.pr.n)])}
+function roster(H){if(!H)return[];return H.ph==='lobby'?rosterLive():(Array.isArray(H.p)?H.p:[])}
+function nameOf(H,pid){const r=roster(H).find(x=>x[0]===pid);if(r)return r[1];const p=players()[pid];return p?clean(p.pr.n):'Someone'}
+function colorOf(H,pid){const all=(H&&Array.isArray(H.p)&&H.p.length?H.p:rosterLive());let i=all.findIndex(x=>x[0]===pid);if(i<0)i=Math.abs([...pid].reduce((s,c)=>s+c.charCodeAt(0),0));return `var(--p${i%10})`}
+function dot(H,pid,cls=''){const n=nameOf(H,pid);return `<span class="dot ${cls}" style="background:${colorOf(H,pid)}">${esc(n.slice(0,1).toUpperCase())}</span>`}
+const qOf=(H,i)=>QS[H.m]&&QS[H.m][H.q[i]]||{q:'?',o:['','','','']};
+function doneAnswer(pr,H){return pr&&pr.s&&pr.s.r===H.id&&typeof pr.s.a==='string'&&/^[0-3]+$/.test(pr.s.a)&&pr.s.a.length===H.q.length}
+function targetsFor(H,pid){return (H.tg||[]).filter(t=>t!==pid)}
+function doneGuess(pr,H){if(!pr||!pr.g||pr.g.r!==H.id)return false;const t=pr.g.t||{};return targetsFor(H,pr.pid).every(x=>typeof t[x]==='string'&&/^[0-3]+$/.test(t[x])&&t[x].length===H.q.length)}
+
+/* ---------- my presence ---------- */
+function pushMe(patch){if(!game)return;game.presence(patch).catch(()=>{})}
+function saveLocal(){ls.set('wkw.round',JSON.stringify({code,r:local.r,a:local.a,g:local.g}))}
+function syncLocal(H){
+  if(!H||H.ph==='lobby'||!H.q||!H.q.length){return}
+  if(local.r===H.id&&local.code===code)return;
+  const n=H.q.length;local={code,r:H.id,a:Array(n).fill(-1),g:{},ai:0,gi:0,seen:{}};
+  try{const s=JSON.parse(ls.get('wkw.round')||'null');if(s&&s.code===code&&s.r===H.id&&Array.isArray(s.a)&&s.a.length===n){local.a=s.a;local.g=s.g||{};for(const k in local.g)local.seen[k]=1}}catch(e){}
+  local.ai=nextA();local.gi=0;publishAnswers();publishGuesses();
+}
+const astr=a=>a.map(x=>x<0?'-':String(x)).join('');
+function publishAnswers(){pushMe({s:{r:local.r,a:astr(local.a)}})}
+function publishGuesses(){const t={};for(const k in local.g)t[k]=astr(local.g[k]);pushMe({g:{r:local.r,t}})}
+function nextA(){const i=local.a.indexOf(-1);return i}
+function gSteps(H){const out=[];for(const t of targetsFor(H,me.pid))for(let i=0;i<H.q.length;i++)out.push([t,i]);return out}
+function nextG(H){const st=gSteps(H);for(let k=0;k<st.length;k++){const[t,i]=st[k];const arr=local.g[t];if(!arr||arr[i]==null||arr[i]<0)return k}return -1}
+
+/* ---------- host ---------- */
+function pushHost(){if(!hs||!game)return;hs.t=Date.now();game.presence({h:hs}).catch(()=>toast('Could not update the lobby. Check your connection.'));updateOpen();render()}
+function updateOpen(){}
+function amHostish(){return !!hs}
+function pickQuestions(H){const bank=QS[H.m];let pool=[...Array(bank.length).keys()].filter(i=>!(H.u||[]).includes(i));if(pool.length<H.n){H.u=[];pool=[...Array(bank.length).keys()]}for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}return pool.slice(0,H.n)}
+function newRound(){hs.r=(hs.r||0)+1;hs.id=Date.now()+'-'+rand(4);hs.p=rosterLive();hs.q=pickQuestions(hs);hs.u=[...(hs.u||[]),...hs.q];hs.ph='answer';hs.tg=[];hs.ans={};hs.rp={};hs.bg={};hs.ri=0;hs.rq=0;hs.rv=false;botAnswers();pushHost()}
+function startGuess(){const pl=players();hs.tg=[];hs.ans={};for(const [pid] of hs.p){const x=pl[pid];if(x&&doneAnswer(x.pr,hs)){hs.tg.push(pid);hs.ans[pid]=x.pr.s.a}}botGuesses();hs.ph=hs.tg.length>=2?'guess':'round';if(hs.ph==='round')toast('Not enough answers to play this round.');pushHost()}
+function startReview(){const pl=players();const rp={};for(const [pid] of hs.p){rp[pid]=0;const x=pl[pid];if(!x||!x.pr.g||x.pr.g.r!==hs.id)continue;const t=x.pr.g.t||{};for(const tg of hs.tg){if(tg===pid||typeof t[tg]!=='string')continue;for(let i=0;i<hs.q.length;i++)if(t[tg][i]===hs.ans[tg][i])rp[pid]++}}hs.rp=rp;hs.ph='review';hs.ri=0;hs.rq=0;hs.rv=false;pushHost()}
+function endRound(){hs.tot=hs.tot||{};for(const k in hs.rp)hs.tot[k]=(hs.tot[k]||0)+hs.rp[k];hs.ph='round';pushHost()}
+function resetToLobby(){Object.assign(hs,{ph:'lobby',r:0,id:null,q:[],p:[],tot:{},rp:{},tg:[],ans:{},ba:{},bg:{},ri:0,rq:0,rv:false});pushHost()}
+function hostTick(){
+  if(!amHost())return;const H=hs,pl=players();
+  const live=H.p?H.p.filter(([pid])=>pl[pid]):[];
+  if(H.ph==='answer'&&live.length&&live.every(([pid])=>doneAnswer(pl[pid].pr,H)))startGuess();
+  else if(H.ph==='guess'&&live.length&&live.every(([pid])=>doneGuess(pl[pid].pr,H)))startReview();
+  updateOpen();
+}
+
+/* ---------- lobby actions ---------- */
+/* ---------- network: the host's browser runs the lobby; messages travel through
+   three free public relays at once, so one having a bad day doesn't stop the game ---------- */
+const PFX='ftest67/v2/';
+const BROKERS=window.FT_BROKERS||['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://test.mosquitto.org:8081'];
+/* Tiny MQTT 3.1.1 client over WebSocket: connect, subscribe, publish (QoS 0), keepalive, auto-reconnect */
+function mqttLink(url,onMsg,onState){
+  const te=new TextEncoder(),td=new TextDecoder();
+  const L={up:false,closed:false,subs:new Set(),ws:null,buf:new Uint8Array(0),ping:null,tries:0,mid:1};
+  const vlen=n=>{const o=[];do{let b=n%128;n=Math.floor(n/128);if(n>0)b|=128;o.push(b)}while(n>0);return o};
+  const str=s=>{const b=te.encode(s);return [b.length>>8,b.length&255,...b]};
+  const pkt=(h,body)=>new Uint8Array([h,...vlen(body.length),...body]);
+  const send=u=>{try{if(L.ws&&L.ws.readyState===1)L.ws.send(u)}catch(e){}};
+  const subNow=t=>{const id=L.mid++&0xffff||1;send(pkt(0x82,[id>>8,id&255,...str(t),0]))};
+  const open=()=>{
+    if(L.closed)return;let ws;try{ws=new WebSocket(url,'mqtt')}catch(e){retry();return}
+    L.ws=ws;ws.binaryType='arraybuffer';L.buf=new Uint8Array(0);
+    ws.onopen=()=>{const cid='ft'+Math.random().toString(36).slice(2,14);send(pkt(0x10,[0,4,77,81,84,84,4,2,0,30,...str(cid)]))};
+    ws.onmessage=ev=>{const d=new Uint8Array(ev.data);const nb=new Uint8Array(L.buf.length+d.length);nb.set(L.buf);nb.set(d,L.buf.length);L.buf=nb;parse()};
+    ws.onclose=()=>{const was=L.up;L.up=false;clearInterval(L.ping);if(was)onState(false);retry()};
+    ws.onerror=()=>{try{ws.close()}catch(e){}};
+  };
+  const retry=()=>{if(L.closed)return;L.tries++;setTimeout(open,Math.min(8000,600*L.tries))};
+  const parse=()=>{
+    for(;;){const b=L.buf;if(b.length<2)return;let len=0,mul=1,i=1,byte;
+      do{if(i>=b.length)return;byte=b[i++];len+=(byte&127)*mul;mul*=128}while(byte&128);
+      if(b.length<i+len)return;const type=b[0]>>4,qos=(b[0]>>1)&3,body=b.subarray(i,i+len);L.buf=b.slice(i+len);
+      if(type===2){if(body[1]===0){L.up=true;L.tries=0;for(const t of L.subs)subNow(t);clearInterval(L.ping);L.ping=setInterval(()=>send(new Uint8Array([0xC0,0])),20000);onState(true)}else{try{L.ws.close()}catch(e){}}}
+      else if(type===3){const tl=(body[0]<<8)|body[1];const topic=td.decode(body.subarray(2,2+tl));let p=2+tl;if(qos>0)p+=2;let msg=null;try{msg=JSON.parse(td.decode(body.subarray(p)))}catch(e){}if(msg)onMsg(topic,msg)}
+    }
+  };
+  L.sub=t=>{L.subs.add(t);if(L.up)subNow(t)};
+  L.pub=(t,obj)=>{if(!L.up)return false;send(pkt(0x30,[...str(t),...te.encode(JSON.stringify(obj))]));return true};
+  L.close=()=>{L.closed=true;clearInterval(L.ping);try{send(new Uint8Array([0xE0,0]));L.ws&&L.ws.close()}catch(e){}};
+  open();return L;
+}
+function makeNet(){
+  const N={me:'p'+Math.random().toString(36).slice(2,10),pres:{},list:Object.freeze([]),subs:[],links:[],isHost:false,closed:false,
+    seq:0,seen:{},hp:{},heard:{},hostSeen:0,tmr:null,timers:[],base:''};
+  const emit=()=>{const ch={peers:N.list};for(const f of N.subs){try{f(ch)}catch(e){console.error(e)}}};
+  const setList=a=>{N.list=Object.freeze(a.filter(x=>x&&typeof x.peer==='string').map(x=>Object.freeze({peer:x.peer,presence:Object.freeze(x.presence&&typeof x.presence==='object'?Object.assign({},x.presence):{}),sameTab:x.peer===N.me,isMe:x.peer===N.me,kind:'viewer',guest:false,by:null})));emit()};
+  const up=()=>N.links.filter(l=>l.up).length;
+  const pub=(dir,body)=>{const m=Object.assign({f:N.me,s:++N.seq},body);let ok=false;for(const l of N.links)ok=l.pub(N.base+dir,m)||ok;return ok};
+  const fresh=m=>{if(!m||typeof m.f!=='string'||typeof m.s!=='number'||m.f===N.me)return false;const k=m.f;if(N.seen[k]!=null&&m.s<=N.seen[k])return false;N.seen[k]=m.s;return true};
+  const snapshot=()=>Object.keys(N.hp).map(k=>({peer:k,presence:N.hp[k]}));
+  const bcast=()=>{N.tmr=null;if(N.closed)return;const l=snapshot();pub('down',{k:'peers',l});setList(l)};
+  const sched=()=>{if(!N.tmr)N.tmr=setTimeout(bcast,60)};
+  const onMsg=(topic,m)=>{
+    if(N.closed||!fresh(m))return;
+    if(N.isHost&&topic===N.base+'up'){
+      if(m.k==='bye'){if(N.hp[m.f]){delete N.hp[m.f];delete N.heard[m.f];sched()}return}
+      if(m.k==='p'&&m.p&&typeof m.p==='object'&&!Array.isArray(m.p)){
+        if(!N.hp[m.f]&&Object.keys(N.hp).length>=16)return;
+        let s;try{s=JSON.stringify(m.p)}catch(e){return}if(s.length>6000)return;
+        N.heard[m.f]=Date.now();const prev=N.hp[m.f]?JSON.stringify(N.hp[m.f]):null;N.hp[m.f]=JSON.parse(s);if(prev!==s)sched()}
+    }else if(topic===N.base+'down'){
+      if(m.k==='peers'&&Array.isArray(m.l)){N.hostSeen=Date.now();N.lastHost=m.f;if(!N.isHost){
+        /* keep my own presence current locally even before the host echoes it */
+        const l=m.l.filter(x=>x&&x.peer!==N.me);l.push({peer:N.me,presence:N.pres});setList(l)}}
+    }
+  };
+  const connect=()=>new Promise((res,rej)=>{let done=false;
+    for(const u of BROKERS)N.links.push(mqttLink(u,onMsg,ok=>{if(ok&&!done){done=true;res()}if(N.onLink)N.onLink()}));
+    for(const l of N.links){l.sub(N.base+'down');if(N.isHost)l.sub(N.base+'up')}
+    N.timers.push(setTimeout(()=>{if(!done){done=true;rej('net')}},10000))});
+  const every=(fn,ms)=>N.timers.push(setInterval(fn,ms));
+  N.peers=()=>N.list;
+  N.onPeers=f=>{N.subs.push(f);return()=>{N.subs=N.subs.filter(x=>x!==f)}};
+  N.presence=patch=>{for(const k in patch){if(patch[k]===null)delete N.pres[k];else N.pres[k]=patch[k]}
+    if(N.isHost){N.hp[N.me]=JSON.parse(JSON.stringify(N.pres));sched()}
+    else{pub('up',{k:'p',p:N.pres});setList(N.list.filter(x=>x.peer!==N.me).concat([{peer:N.me,presence:N.pres}]))}
+    return Promise.resolve()};
+  N.leave=()=>{if(N.closed)return Promise.resolve();if(!N.isHost)pub('up',{k:'bye'});else{N.hp={};pub('down',{k:'peers',l:[]})}
+    N.closed=true;for(const t of N.timers){clearTimeout(t);clearInterval(t)}clearTimeout(N.tmr);setTimeout(()=>{for(const l of N.links)l.close()},300);return Promise.resolve()};
+  N.host=async id=>{N.base=PFX+id+'/';N.isHost=true;await connect();
+    /* listen briefly: if someone is already hosting this code, pick another */
+    await new Promise(r=>setTimeout(r,1500));if(N.hostSeen)throw 'taken';
+    N.hp[N.me]=JSON.parse(JSON.stringify(N.pres));bcast();
+    every(()=>{if(N.closed)return;const now=Date.now();let ch=false;for(const k in N.heard)if(now-N.heard[k]>12000){delete N.heard[k];delete N.hp[k];ch=true}if(ch)bcast();else pub('down',{k:'peers',l:snapshot()})},2500)};
+  N.join=async id=>{N.base=PFX+id+'/';await connect();
+    const start=Date.now();pub('up',{k:'p',p:N.pres});
+    for(let i=0;!N.hostSeen;i++){if(Date.now()-start>7000)throw 'nolobby';await new Promise(r=>setTimeout(r,250));if(i%4===3)pub('up',{k:'p',p:N.pres})}
+    every(()=>{if(N.closed)return;pub('up',{k:'p',p:N.pres});if(Date.now()-N.hostSeen>9000&&N.list.some(x=>x.peer!==N.me))setList(N.list.filter(x=>x.peer===N.me))},3000)};
+  N.relays=()=>up();
+  return N;
+}
+
+/* Inside Claude, outside connections are blocked, so the game uses Claude's own live room instead */
+function makeRoomNet(){
+  const N={g:null};const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const hosted=()=>N.g.peers().some(p=>!p.sameTab&&p.presence&&p.presence.h);
+  const enter=async id=>{try{N.g=await room.join('ft-'+id)}catch(e){throw 'net'}};
+  N.peers=()=>N.g?N.g.peers():[];
+  N.onPeers=(f,err)=>N.g.onPeers(f,err);
+  N.presence=p=>N.g?N.g.presence(p):Promise.resolve();
+  N.leave=()=>N.g?N.g.leave().catch(()=>{}):Promise.resolve();
+  N.relays=()=>1;
+  N.host=async id=>{await enter(id);await wait(1200);if(hosted()){await N.leave();throw 'taken'}};
+  N.join=async id=>{await enter(id);for(let t=0;t<28;t++){if(hosted())return;await wait(250)}await N.leave();throw 'nolobby'};
+  return N;
+}
+async function joinGame(c,asHost){
+  c=c.toUpperCase().replace(/[^A-Z0-9]/g,'');if(c.length!==4){toast('Lobby codes are 4 letters.');return false}
+  if(game){try{game.leave()}catch(e){}game=null}
+  const net=room?makeRoomNet():makeNet();
+  try{await (asHost?net.host(c.toLowerCase()):net.join(c.toLowerCase()))}
+  catch(e){net.leave();if(e==='taken')return 'taken';toast(e==='nolobby'?`No lobby found with code ${c}. Check the code with your host.`:"Couldn't reach the game servers. Check your internet and try again.");return false}
+  game=net;
+  code=c;ls.set('wkw.last',c);
+  game.onPeers(onChange,()=>{toast('Lost connection to the lobby.');});
+  pushMe({pid:me.pid,n:me.name,j:Date.now()});
+  render();return true;
+}
+async function createLobby(){
+  for(let i=0;i<4;i++){
+    const c=Array.from({length:4},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]).join('');
+    hs={code:c,ph:'lobby',m:pickMode,R:3,n:5,r:0,q:[],u:[],p:[],tot:{},rp:{},tg:[],ans:{},ri:0,rq:0,rv:false,t:0};
+    toast('Creating your lobby…');
+    const ok=await joinGame(c,true);
+    if(ok===true){pushHost();return}
+    hs=null;if(ok!=='taken')return;
+  }
+  toast("Couldn't create a lobby. Try again.");
+}
+function leaveGame(){if(game){game.leave().catch(()=>{})}game=null;fxOpen=null;fxSeen={};code=null;hs=null;lastH=null;local={r:-1,a:[],g:{},ai:0,gi:0,seen:{}};menuOpen=false;menuArm=null;updateOpenClear();render()}
+function updateOpenClear(){}
+
+function onChange(){
+  const hi=hostInfo();
+  if(hs&&hi&&!hi.peer.sameTab&&(hi.h.t||0)>(hs.t||0)){hs=null;pushMe({h:null});updateOpenClear()}
+  const H=curH();if(H)lastH=H;
+  checkFx();syncLocal(H);hostTick();render();
+}
+
+/* ---------- views ---------- */
+/* ---------- 67s and jump scares ---------- */
+const SCARER='Filipe67';
+let fxOpen=null,fxSeen={},fxLast=0,fxTimer=null,fxLast67=0,fxTick=null,fxRecv={};
+const CD67=6700;
+const cd67=()=>Math.max(0,CD67-(Date.now()-fxLast67));
+function startTick(){clearInterval(fxTick);fxTick=setInterval(()=>{render();if(!cd67()){clearInterval(fxTick);fxTick=null;render()}},150)}
+const canScare=()=>me.name===SCARER;
+function fxTargets(){return Object.values(players()).filter(x=>!x.pr.bot&&x.pr.pid!==me.pid).map(x=>[x.pr.pid,clean(x.pr.n)])}
+function fxMenu(kind,H){const ts=fxTargets();return `<div class="fxmenu" role="menu"><div class="label">${kind==='67'?'Send someone a 67':'Send a jump scare'}</div><button role="menuitem" data-act="fxself" data-k="${kind}">${dot(H,me.pid)}Yourself (test)</button>${ts.length?ts.map(([pid,n])=>`<button role="menuitem" data-act="fxsend" data-k="${kind}" data-v="${esc(pid)}">${dot(H,pid)}${esc(n)}</button>`).join(''):'<p class="small muted" style="padding:6px">Nobody else is here yet.</p>'}</div>`}
+function fxButtons(H){if(!game)return '';const cd=cd67();return `<div class="fxwrap"><button class="fxbtn" data-act="fxopen" data-v="67" aria-expanded="${fxOpen==='67'}" ${cd?'disabled title="Cooling down"':''}>67${cd?` <span class="cd">${(cd/1000).toFixed(1)}s</span>`:''}</button>${fxOpen==='67'?fxMenu('67',H):''}</div>${canScare()?`<div class="fxwrap"><button class="fxbtn scare" data-act="fxopen" data-v="js" aria-expanded="${fxOpen==='js'}">Scare</button>${fxOpen==='js'?fxMenu('js',H):''}</div>`:''}`}
+function fxSend(kind,to){
+  if(kind==='js'&&!canScare())return;
+  if(kind==='67'){const cd=cd67();if(cd){toast(`Wait ${(cd/1000).toFixed(1)}s to send another 67`);return}fxLast67=Date.now();startTick()}
+  else{if(Date.now()-fxLast<1200){toast('Easy there. Try again in a second.');return}fxLast=Date.now()}pushMe({z:{to,k:kind,id:Date.now()}});
+  const n=(players()[to]||{pr:{n:'them'}}).pr.n;toast(kind==='67'?`Sent a 67 to ${clean(n)}`:`Scared ${clean(n)}`);
+}
+function checkFx(){
+  for(const p of gpeers()){if(p.sameTab)continue;const pr=p.presence||{};const z=pr.z;const id=z&&typeof z.id==='number'?z.id:0;
+    if(!(p.peer in fxSeen)){fxSeen[p.peer]=id;continue}
+    if(id===fxSeen[p.peer])continue;fxSeen[p.peer]=id;
+    if(!z||z.to!==me.pid)continue;
+    if(z.k==='67'){const now=Date.now();if(now-(fxRecv[p.peer]||0)<CD67-700)continue;fxRecv[p.peer]=now;show67(clean(pr.n),pr.pid)}
+    else if(z.k==='js'&&clean(pr.n)===SCARER)showScare();
+  }
+}
+function show67(from,pid){const el=document.getElementById('fx');clearTimeout(fxTimer);el.className='';const H=curH();const nm=from||'Someone';
+  el.innerHTML=`<div class="six"><div class="from"><span class="dot" style="background:${pid?colorOf(H,pid):'var(--p0)'}">${esc(nm.slice(0,1).toUpperCase())}</span><div><em>${esc(nm)}</em><small>sent you a</small></div></div><b>67</b></div>`;
+  el.hidden=false;fxTimer=setTimeout(()=>{el.hidden=true;el.innerHTML=''},3000)}
+const FACE=`<svg viewBox="0 0 200 200" aria-hidden="true"><rect width="200" height="200" fill="#000"/><path d="M100 18C52 18 34 62 38 108c3 38 22 76 62 76s59-38 62-76c4-46-14-90-62-90z" fill="#C9C2B0"/><path d="M56 70c10-12 28-12 38 2M144 70c-10-12-28-12-38 2" stroke="#2A2622" stroke-width="5" fill="none"/><ellipse cx="72" cy="92" rx="20" ry="24" fill="#000"/><ellipse cx="128" cy="92" rx="20" ry="24" fill="#000"/><circle cx="74" cy="96" r="5" fill="#FF1A1A"/><circle cx="126" cy="96" r="5" fill="#FF1A1A"/><path d="M96 112l4 14 4-14" fill="#3A332C"/><path d="M58 140c14 34 70 34 84 0c-12 8-72 8-84 0z" fill="#120000"/><path d="M64 142l6 12 6-10 6 13 6-12 6 13 6-12 6 13 6-12 6 12 6-10" stroke="#E8E2D0" stroke-width="3" fill="none"/><path d="M60 40l10 18M140 40l-10 18M100 30v20" stroke="#8A8274" stroke-width="2"/></svg>`;
+function screech(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ac=new AC();const len=ac.sampleRate*.5;const buf=ac.createBuffer(1,len,ac.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const src=ac.createBufferSource();src.buffer=buf;const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(900,ac.currentTime);o.frequency.exponentialRampToValueAtTime(180,ac.currentTime+.5);const g=ac.createGain();g.gain.value=.35;src.connect(g);o.connect(g);g.connect(ac.destination);src.start();o.start();o.stop(ac.currentTime+.5);setTimeout(()=>ac.close().catch(()=>{}),900)}catch(e){}}
+function showScare(){const el=document.getElementById('fx');clearTimeout(fxTimer);el.className='scare';el.innerHTML=FACE;el.hidden=false;screech();fxTimer=setTimeout(()=>{el.hidden=true;el.className='';el.innerHTML=''},500)}
+
+let menuOpen=false,menuArm=null,lastQKey='',lastSheet='';
+const HINT_A=["Answer honestly. Your friends will try to guess this.","Go with your gut.","No wrong answers here.","Be honest. They'll know.","First instinct wins."];
+const HINT_G=["Trust your gut.","How well do you really know them?","Think back. You've seen this.","No pressure.","This one should be easy… right?"];
+function header(H){
+  const m=H?H.m:null;
+  return `<div class="bar">${fxButtons(H)}<button class="menubtn" data-act="menu" aria-haspopup="dialog" aria-expanded="${menuOpen}"><span class="burger" aria-hidden="true"><i></i><i></i><i></i></span><span class="mtxt">Menu</span></button></div>`
+}
+function menuSheet(){
+  if(!menuOpen||!game)return '';const host=amHost();const H=curH();const inLobby=H&&H.ph==='lobby';
+  return `<div class="sheet-bg" data-act="menuclose"><div class="sheet" role="dialog" aria-label="Menu" data-stop="1">
+    <div class="row"><h2 class="grow">Menu</h2><button class="btn-link" data-act="menuclose">Close</button></div>
+    ${host&&!inLobby?`<button class="mi go ${menuArm==='restart'?'armed':''}" data-act="restart">${menuArm==='restart'?'Tap again to restart':'Restart game'}</button>`:''}
+    <button class="mi warn ${menuArm==='leave'?'armed':''}" data-act="menuleave">${menuArm==='leave'?'Tap again to leave':'Leave game'}</button>
+  </div></div>`
+}
+function qdots(n,doneFn,cur){let s='<div class="qdots">';for(let i=0;i<n;i++)s+=`<i class="${i===cur?'cur':doneFn(i)?'on':''}"></i>`;return s+'</div>'}
+function qhead(H,pid,eyebrow,name,count){return `<div class="qhead">${dot(H,pid)}<div class="who">${eyebrow?`<div class="eyebrow">${eyebrow}</div>`:''}<div class="nm${eyebrow?'':' solo'}">${esc(name)}</div></div><span class="count">${count}</span></div>`}
+function optList(Q,cur,act){return `<div class="opts">${Q.o.map((o,k)=>`<button class="opt ${cur===k?'sel':''}" data-act="${act}" data-v="${k}"><span class="lt">${LET[k]}</span><span>${esc(o)}</span></button>`).join('')}</div>`}
+function vHome(){
+  const lobbies=[];
+  const last=ls.get('wkw.last');const off=roomState!=='ok';
+  return `<header class="logo" aria-label="Friendship Test"><div class="logo-top" aria-hidden="true">${[...'FRIENDSHIP'].map((ch,i)=>`<span style="--c:var(--p${[0,1,2,3,4,5,9,7,8,1][i]});--d:${i*45}ms;--r:${[-4,3,-2,4,-3,2,-4,3,-2,4][i]}deg">${ch}</span>`).join('')}</div><div class="logo-tag" aria-hidden="true">TEST</div></header>
+  ${roomState==='none'?`<div class="notice">Couldn't load the multiplayer connection. Check your internet and refresh the page.</div>`:''}
+  ${roomState==='connecting'?`<p class="muted small">Connecting…</p>`:''}
+  <section class="panel"><label class="label" for="nm">Your name</label><input type="text" id="nm" maxlength="18" placeholder="e.g. Filipe" value="${esc(me.name)}" autocomplete="nickname"></section>
+  <section class="panel"><div class="label">Create a lobby</div>
+    <div class="modes">${Object.keys(MODES).map(k=>`<button class="mode mode-${k}" data-act="pickmode" data-v="${k}" aria-pressed="${pickMode===k}"><b>${MODES[k].name}</b><span>${MODES[k].desc}</span><span>${QS[k].length} questions</span></button>`).join('')}</div>
+    <button class="btn-main" data-act="create" ${off?'disabled':''}>Create ${MODES[pickMode].name} lobby</button></section>
+  <section class="panel"><div class="label">Join a lobby</div>
+    <div class="row"><input type="text" id="jc" class="codein grow" maxlength="4" placeholder="CODE" autocomplete="off"><button class="btn-alt" data-act="join" ${off?'disabled':''}>Join</button></div>
+    ${last&&!off?`<button class="btn-link" data-act="rejoin" data-v="${esc(last)}">Rejoin ${esc(last)}</button>`:''}
+    ${lobbies.length?`<div class="label">Open now</div><div class="list">${lobbies.map(o=>`<div class="lobbyrow"><div class="info"><b>${esc(o.code)}</b> <span class="mode-${o.m} small" style="font-weight:700">${MODES[o.m].name}</span><div class="small muted">Hosted by ${esc(clean(o.host))} · ${Number(o.c)||0}/${MAXP}</div></div><button class="btn-alt" data-act="rejoin" data-v="${esc(o.code)}">Join</button></div>`).join('')}</div>`:''}
+  </section>`
+}
+function vLobby(H){
+  const ros=rosterLive(),host=amHost();const pl=players();const extra=Object.keys(pl).length-ros.length;
+  const seats=[];for(let i=0;i<MAXP;i++){const r=ros[i];seats.push(r?`<div class="seat">${dot(H,r[0])}<span class="nm">${esc(r[1])}</span>${r[0].startsWith('bot')?'<span class="tag">Bot</span>':hostInfo()&&hostInfo().peer.presence.pid===r[0]?'<span class="tag">Host</span>':r[0]===me.pid?'<span class="tag">You</span>':''}</div>`:`<div class="seat empty">Open seat</div>`)}
+  const inRos=ros.some(r=>r[0]===me.pid);
+  return `${header(H)}
+  <section class="panel" style="align-items:center;text-align:center"><div class="label">Lobby code</div><div class="bigcode">${esc(code)}</div><button data-act="copy">Copy code</button></section>
+  <section class="panel"><div class="row"><div class="label grow">Players ${ros.length}/${MAXP}</div></div><div class="seats">${seats.join('')}</div>${extra>0?`<p class="small muted">${extra} more waiting. The lobby is full.</p>`:''}${!inRos?`<div class="notice">The lobby is full. You can watch and join if a seat opens.</div>`:''}</section>
+  <section class="panel"><div class="label">Mode</div>
+   ${host?`<div class="modes">${Object.keys(MODES).map(k=>`<button class="mode mode-${k}" data-act="setmode" data-v="${k}" aria-pressed="${H.m===k}"><b>${MODES[k].name}</b><span>${MODES[k].desc}</span></button>`).join('')}</div>
+   <div class="row"><span class="label grow">Rounds</span><div class="seg">${[1,2,3,4,5].map(v=>`<button data-act="setR" data-v="${v}" aria-pressed="${H.R===v}">${v}</button>`).join('')}</div></div>
+   <div class="row"><span class="label grow">Questions per round</span><div class="seg">${[3,5,7].map(v=>`<button data-act="setN" data-v="${v}" aria-pressed="${H.n===v}">${v}</button>`).join('')}</div></div>
+   <div class="row"><span class="label grow">Test bots</span><button data-act="addbot" ${ros.length>=MAXP?'disabled':''}>Add bot</button><button data-act="clearbots" ${(H.bots||[]).length?'':'disabled'}>Remove bots</button></div>
+   <button class="btn-main" data-act="start" ${ros.length<2?'disabled':''}>${ros.length<2?'Need at least 2 players':'Start game'}</button>`
+   :`<p><b class="mode-${H.m}">${MODES[H.m].name}</b> · ${H.R} round${H.R>1?'s':''} · ${H.n} questions each</p><p class="muted small">${MODES[H.m].desc}</p><p class="muted">Waiting for the host to start…</p>`}
+  </section>
+  <button class="btn-link" data-act="leave">Leave lobby</button>`
+}
+function progBar(n,doneFn,cur){let s='<div class="prog">';for(let i=0;i<n;i++)s+=`<i class="${i===cur?'cur':doneFn(i)?'on':''}"></i>`;return s+'</div>'}
+function waitList(H,fn){const pl=players();return `<div class="waitlist">${H.p.map(([pid,n])=>{const x=pl[pid];const done=x&&fn(x.pr);return `<span class="pchip ${done?'hit':''}">${dot(H,pid)}${esc(n)} ${!x?'· away':done?'✓':'…'}</span>`}).join('')}</div>`}
+function cnt(s){return typeof s==='string'?(s.match(/[0-3]/g)||[]).length:0}
+function progressOf(H,kind,pr){
+  if(kind==='a'){const tot=H.q.length;const d=pr&&pr.s&&pr.s.r===H.id?cnt(pr.s.a):0;return [d,tot]}
+  const ts=targetsFor(H,pr?pr.pid:'');const tot=ts.length*H.q.length;let d=0;if(pr&&pr.g&&pr.g.r===H.id){const t=pr.g.t||{};for(const x of ts)d+=cnt(t[x])}return [d,tot]}
+function joinNames(ns){if(ns.length===1)return ns[0];if(ns.length===2)return ns[0]+' and '+ns[1];if(ns.length===3)return ns[0]+', '+ns[1]+' and '+ns[2];return ns[0]+', '+ns[1]+' and '+(ns.length-2)+' others'}
+function waitScreen(H,kind,title,skipLabel){
+  const pl=players();const done=kind==='a'?pr=>doneAnswer(pr,H):pr=>doneGuess(pr,H);
+  const pending=H.p.filter(([pid])=>pl[pid]&&!done(pl[pid].pr));
+  const names=pending.map(([,n])=>esc(n));
+  const verb=kind==='a'?'answering':'guessing';
+  const headline=pending.length?`${joinNames(names)} ${pending.length===1?'is':'are'} finishing…`:'Everyone is done!';
+  return `<section class="panel finishing">
+    ${pending.length?`<div class="who">${pending.slice(0,5).map(([pid])=>dot(H,pid)).join('')}</div><div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>`:''}
+    <h2>${headline}</h2>
+    <p class="muted">${title}${pending.length?` Still ${verb}: ${pending.length} of ${H.p.filter(([pid])=>pl[pid]).length}.`:''}</p>
+    ${hostSkip(skipLabel)}
+  </section>
+  <section class="panel"><div class="label">Progress</div><div class="board">${H.p.map(([pid,n])=>{const x=pl[pid];const [d,t]=progressOf(H,kind,x&&x.pr);const ok=x&&done(x.pr);return `<div class="pstat">${dot(H,pid)}<span class="nm">${esc(n)}${pid===me.pid?' (you)':''}</span><span class="st ${ok?'ok':''}">${!x?'Left':ok?'Done ✓':d+' of '+t}</span></div>`}).join('')}</div></section>`
+}
+function hostSkip(label){return amHost()?`<button class="btn-link" data-act="skip">${label}</button>`:''}
+function vAnswer(H){
+  const n=H.q.length;
+  if(local.ai<0){
+    return `${header(H)}${waitScreen(H,'a',"You're locked in. Guessing starts when everyone's done.",'Skip waiting and start guessing')}
+    <section class="panel"><div class="label">Your answers · tap to change</div>${H.q.map((qi,i)=>{const Q=qOf(H,i),a=local.a[i];return `<button class="sumrow" data-act="editA" data-v="${i}"><span class="lt">${LET[a]}</span><span class="q">${esc(Q.q)}<small>${esc(Q.o[a])}</small></span></button>`}).join('')}</section>`
+  }
+  const i=local.ai,Q=qOf(H,i);
+  return `${header(H)}
+  <section class="qbox" data-qkey="a-${H.id}-${i}">${qhead(H,me.pid,'','Your answers',`${i+1} / ${n}`)}${qdots(n,k=>local.a[k]>=0,i)}
+   <div class="qbody"><div class="qtext">${esc(Q.q)}</div><p class="qhint">${HINT_A[i%HINT_A.length]}</p>${optList(Q,local.a[i],'ans')}
+   <div class="qfoot">${i>0?`<button class="btn-link" data-act="backA">← Back</button>`:'<span></span>'}</div></div></section>`
+}
+function friendsStrip(H,ts,t){return `<div class="friends">${ts.map(x=>{const arr=local.g[x]||[];const done=arr.length===H.q.length&&arr.every(v=>v>=0);return `<span title="${esc(nameOf(H,x))}" style="display:contents">${dot(H,x,(x===t?'now':done?'done':''))}</span>`}).join('')}<span class="lbl">Friend ${ts.indexOf(t)+1} of ${ts.length}</span></div>`}
+function vGuess(H){
+  const st=gSteps(H);
+  if(!st.length)return `${header(H)}<section class="panel"><h2>Sit this one out</h2><p class="muted">There's nobody else to guess about this round.</p>${hostSkip('Go to the reveal')}</section>`;
+  if(local.gi<0||local.gi>=st.length){
+    return `${header(H)}${waitScreen(H,'g',"Your guesses are in. The reveal starts when everyone's done.",'Skip waiting and start the reveal')}<button class="btn-link" data-act="editG">Review my guesses</button>`
+  }
+  const [t,i]=st[local.gi],Q=qOf(H,i);const ts=targetsFor(H,me.pid);const cur=(local.g[t]||[])[i];const nm=nameOf(H,t);
+  if(!local.seen[t]){
+    return `${header(H)}${friendsStrip(H,ts,t)}
+    <section class="intro" data-qkey="i-${H.id}-${t}">${dot(H,t)}<div class="eyebrow">${ts.indexOf(t)===0?'First up':'Next up'}</div><div class="big">${esc(nm)}</div><p>How well do you know ${esc(nm)}? ${H.q.length} questions. Pick what you think they answered.</p><button data-act="introgo" data-v="${esc(t)}">Let's go</button></section>`
+  }
+  const arr=local.g[t]||[];
+  return `${header(H)}${friendsStrip(H,ts,t)}
+  <section class="qbox" data-qkey="g-${H.id}-${local.gi}">${qhead(H,t,'What did they pick?',nm,`${i+1} / ${H.q.length}`)}${qdots(H.q.length,k=>arr[k]>=0,i)}
+   <div class="qbody"><div class="qtext">${esc(Q.q)}</div><p class="qhint">${HINT_G[(i+ts.indexOf(t))%HINT_G.length]}</p>${optList(Q,cur,'guess')}
+   <div class="qfoot">${local.gi>0?`<button class="btn-link" data-act="backG">← Back</button>`:'<span></span>'}</div></div></section>`
+}
+function runningPts(H){const pl=players();const pts={};for(const [pid] of H.p)pts[pid]=0;H.tg.forEach((tg,ti)=>{for(let i=0;i<H.q.length;i++){if(ti>H.ri||(ti===H.ri&&(i>H.rq||(i===H.rq&&!H.rv))))return;for(const [pid] of H.p){if(pid===tg)continue;const x=pl[pid];const g=x&&x.pr.g&&x.pr.g.r===H.id&&x.pr.g.t&&x.pr.g.t[tg];if(typeof g==='string'&&g[i]===H.ans[tg][i])pts[pid]++}}});return pts}
+function vReview(H){
+  const tg=H.tg[H.ri];if(!tg)return vRound(H);
+  const i=H.rq,Q=qOf(H,i),real=+H.ans[tg][i];const pl=players();
+  const by=[[],[],[],[]];for(const [pid] of H.p){if(pid===tg)continue;const x=pl[pid];const g=x&&x.pr.g&&x.pr.g.r===H.id&&x.pr.g.t&&x.pr.g.t[tg];if(typeof g==='string'&&/[0-3]/.test(g[i]))by[+g[i]].push(pid)}
+  const pts=runningPts(H);const order=[...H.p].sort((a,b)=>(pts[b[0]]||0)-(pts[a[0]]||0));
+  const host=amHost();const last=H.ri===H.tg.length-1&&i===H.q.length-1;
+  return `${header(H)}
+  <section class="qbox" data-qkey="r-${H.id}-${H.ri}-${i}">${qhead(H,tg,tg===me.pid?"The truth about you":`Reveal · player ${H.ri+1} of ${H.tg.length}`,nameOf(H,tg),`${i+1} / ${H.q.length}`)}${qdots(H.q.length,k=>k<i,i)}
+   <div class="qbody"><div class="qtext">${esc(Q.q)}</div>
+   <div class="stack">${Q.o.map((o,k)=>{const right=H.rv&&k===real;const dim=H.rv&&k!==real;return `<div class="rv-opt ${right?'right':''} ${dim?'dim':''}"><div class="top"><span class="lt">${LET[k]}</span><span>${esc(o)}</span>${right?`<span class="badge">${esc(nameOf(H,tg))}'s answer</span>`:''}</div>${by[k].length?`<div class="chips">${by[k].map(pid=>`<span class="pchip ${right?'hit':''}">${dot(H,pid)}${esc(nameOf(H,pid))}${right?' +1':''}</span>`).join('')}</div>`:''}</div>`}).join('')}</div>
+   ${host?`<button class="btn-main" data-act="next">${!H.rv?'Reveal answer':last?'Finish round':'Next question'}</button>`:`<p class="muted small" style="text-align:center">The host controls the reveal.</p>`}</div></section>
+  <section class="panel"><div class="label">This round so far</div><div class="board">${order.map(([pid,n],k)=>`<div class="brow ${pid===me.pid?'me':''}"><span class="rk">${k+1}</span>${dot(H,pid)}<span class="nm">${esc(n)}</span><span class="pts">${pts[pid]||0}</span></div>`).join('')}</div></section>`
+}
+function board(H,showGain){const tot=H.tot||{},rp=H.rp||{};const ids=new Set([...H.p.map(x=>x[0]),...Object.keys(tot)]);const rows=[...ids].map(pid=>[pid,tot[pid]||0,rp[pid]||0]).sort((a,b)=>b[1]-a[1]);return {rows,html:`<div class="board">${rows.map(([pid,t,g],k)=>`<div class="brow ${pid===me.pid?'me':''}"><span class="rk">${k+1}</span>${dot(H,pid)}<span class="nm">${esc(nameOf(H,pid))}</span>${showGain?`<span class="gain">+${g}</span>`:''}<span class="pts">${t}</span></div>`).join('')}</div>`}}
+function vRound(H){
+  const b=board(H,true);const host=amHost();const fin=H.r>=H.R;
+  return `${header(H)}<section class="panel"><h2>Round ${H.r} scores</h2><p class="muted small">One point for every answer you guessed right.</p>${b.html}</section>
+  ${host?`<button class="btn-main" data-act="${fin?'final':'nextround'}">${fin?'See final results':'Start round '+(H.r+1)}</button>`:`<p class="muted" style="text-align:center">Waiting for the host…</p>`}`
+}
+function vFinal(H){
+  const b=board(H,false);const top=b.rows.slice(0,3);const host=amHost();
+  const pod=(r,cls,h)=>r?`<div class="pod ${cls}">${dot(H,r[0])}<span class="nm">${esc(nameOf(H,r[0]))}</span><div class="blk" style="height:${h}px">${r[1]}</div></div>`:'<div></div>';
+  return `${header(H)}<div class="stack" style="text-align:center"><div class="label">Final results</div><h1>${esc(top[0]?nameOf(H,top[0][0]):'')} knows the crew best</h1></div>
+  <div class="podium">${pod(top[1],'p2',70)}${pod(top[0],'p1',100)}${pod(top[2],'p3',50)}</div>
+  <section class="panel"><div class="label">Leaderboard</div>${b.html}</section>
+  ${host?`<button class="btn-main" data-act="again">Play again</button>`:`<p class="muted" style="text-align:center">The host can start a new game.</p>`}
+  <button class="btn-link" data-act="leave">Leave lobby</button>`
+}
+function vSpectate(H){return `${header(H)}<section class="panel"><h2>Game in progress</h2><p class="muted">You'll be dealt in at the start of the next round if there's a seat. Want in now? Ask the host to tap <b>Menu → Restart to lobby</b>.</p>${H.p&&H.p.length?waitList(H,()=>false):''}</section><button class="btn-link" data-act="leave">Leave lobby</button>`}
+function vNoHost(){return `<div class="bar"><span class="brand">Friendship Test</span><span class="chip code">${esc(code)}</span></div><section class="panel"><h2>${lastH?'Lost the host':'Connecting to the lobby…'}</h2><p class="muted">${lastH?'The host closed the game or lost connection. Trying to reconnect. The game continues when the host is back.':'Hang tight.'}</p>${lastH?`<button class="btn-main" data-act="rejoin" data-v="${esc(code)}">Try again now</button>`:''}</section><button class="btn-link" data-act="leave">Leave lobby</button>`}
+function view(){
+  if(!game)return vHome();
+  const H=curH();if(!H)return vNoHost();
+  if(H.ph==='lobby')return vLobby(H);
+  const inGame=(H.p||[]).some(x=>x[0]===me.pid);
+  if(!inGame&&H.ph!=='round'&&H.ph!=='final'&&H.ph!=='review')return vSpectate(H);
+  if(H.ph==='answer')return vAnswer(H);
+  if(H.ph==='guess')return vGuess(H);
+  if(H.ph==='review')return vReview(H);
+  if(H.ph==='round')return vRound(H);
+  if(H.ph==='final')return vFinal(H);
+  return vSpectate(H);
+}
+const app=document.getElementById('app');let lastView='';
+function themeColor(){
+  if(!game)return null;const H=curH();if(!H)return null;
+  if(H.ph==='answer'&&local.ai>=0)return colorOf(H,me.pid);
+  if(H.ph==='guess'){const st=gSteps(H);if(local.gi>=0&&local.gi<st.length)return colorOf(H,st[local.gi][0])}
+  if(H.ph==='review'){const tg=H.tg&&H.tg[H.ri];if(tg)return colorOf(H,tg)}
+  return null}
+function applyTheme(){const c=themeColor();const de=document.documentElement;if(c){de.style.setProperty('--pc',c);de.classList.add('themed')}else{de.style.removeProperty('--pc');de.classList.remove('themed')}}
+function render(){
+  const act=document.activeElement;const fid=act&&act.id;let sel=null;try{sel=act&&act.selectionStart}catch(e){}
+  const vals={};app.querySelectorAll('input').forEach(i=>vals[i.id]=i.value);
+  applyTheme();
+  const sh=menuSheet();if(sh!==lastSheet){const opening=!lastSheet&&sh;lastSheet=sh;const so=document.getElementById('sheet');so.innerHTML=sh;if(opening){const el=so.querySelector('.sheet');if(el)el.classList.add('enter')}}
+  const html=view();if(html===lastView)return;lastView=html;app.innerHTML=html;
+  const qk=app.querySelector('[data-qkey]');if(qk&&qk.dataset.qkey!==lastQKey){lastQKey=qk.dataset.qkey;qk.classList.add('enter')}else if(!qk)lastQKey='';
+  for(const id in vals){const el=document.getElementById(id);if(el)el.value=vals[id]}
+  if(fid){const el=document.getElementById(fid);if(el){el.focus();try{if(sel!=null)el.setSelectionRange(sel,sel)}catch(e){}}}
+}
+
+/* ---------- events ---------- */
+function needName(){const el=document.getElementById('nm');const v=clean(el?el.value:me.name);if(!v){toast('Enter your name first.');el&&el.focus();return false}me.name=v;ls.set('wkw.name',v);return true}
+app.addEventListener('input',e=>{if(e.target.id==='jc')e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menuOpen){menuOpen=false;menuArm=null;render();return}if(e.key==='Enter'&&e.target.id==='jc'){e.preventDefault();app.querySelector('[data-act=join]')?.click()}});
+document.addEventListener('click',async e=>{
+  let b=e.target.closest('[data-act]');
+  if(b&&b.dataset.act==='menuclose'&&b.classList.contains('sheet-bg')&&e.target.closest('[data-stop]'))b=null;
+  if(menuArm&&(!b||!['restart','menuleave'].includes(b.dataset.act))){menuArm=null;render()}
+  if(fxOpen&&!e.target.closest('.fxwrap')){fxOpen=null;render()}
+  if(!b||b.disabled)return;const a=b.dataset.act,v=b.dataset.v;const H=curH();
+  switch(a){
+    case 'fxopen':fxOpen=fxOpen===v?null:v;render();break;
+    case 'fxself':fxOpen=null;render();if(b.dataset.k==='67')show67(me.name,me.pid);else if(canScare())showScare();break;
+    case 'fxsend':fxOpen=null;fxSend(b.dataset.k,v);render();break;
+    case 'pickmode':pickMode=v;render();break;
+    case 'create':if(needName())await createLobby();break;
+    case 'join':{if(!needName())break;const c=(document.getElementById('jc')||{}).value||'';await joinGame(c);break}
+    case 'rejoin':if(needName())await joinGame(v);break;
+    case 'leave':leaveGame();break;
+    case 'menu':menuOpen=!menuOpen;menuArm=null;fxOpen=null;render();break;
+    case 'menuclose':menuOpen=false;menuArm=null;render();break;
+    case 'menuleave':if(menuArm!=='leave'){menuArm='leave';render();break}leaveGame();toast('You left the lobby');break;
+    case 'restart':if(!amHost())break;if(menuArm!=='restart'){menuArm='restart';render();break}menuOpen=false;menuArm=null;resetToLobby();toast('Back in the lobby. Anyone can join now.');break;
+    case 'introgo':local.seen[v]=1;render();break;
+    case 'copy':try{await navigator.clipboard.writeText(code);toast('Code copied')}catch(err){toast('Code: '+code)}break;
+    case 'setmode':if(amHost()&&MODES[v]){hs.m=v;hs.u=[];pushHost()}break;
+    case 'setR':if(amHost()){hs.R=+v;pushHost()}break;
+    case 'setN':if(amHost()){hs.n=+v;pushHost()}break;
+    case 'addbot':if(amHost()&&rosterLive().length<MAXP){hs.bots=hs.bots||[];const used=hs.bots.map(b=>b[1]);const nm=BOTNAMES.find(x=>!used.includes('Bot '+x))||String(hs.bots.length+1);hs.bots.push(['bot'+rand(5),'Bot '+nm]);pushHost()}break;
+    case 'clearbots':if(amHost()){hs.bots=[];pushHost()}break;
+    case 'start':if(amHost()){hs.tot={};hs.u=[];hs.r=0;newRound()}break;
+    case 'ans':local.a[local.ai]=+v;local.ai=nextA();saveLocal();publishAnswers();lastView='';render();break;
+    case 'backA':local.ai=Math.max(0,local.ai-1);render();break;
+    case 'editA':local.ai=+v;render();break;
+    case 'guess':{const st=gSteps(H);const[t,i]=st[local.gi];if(!local.g[t])local.g[t]=Array(H.q.length).fill(-1);local.g[t][i]=+v;
+      let nx=local.gi+1;if(nx>=st.length||((local.g[st[nx][0]]||[])[st[nx][1]]>=0))nx=nextG(H);local.gi=nx;saveLocal();publishGuesses();render();break}
+    case 'backG':local.gi=Math.max(0,local.gi-1);render();break;
+    case 'editG':local.gi=0;render();break;
+    case 'skip':if(amHost()){if(hs.ph==='answer')startGuess();else if(hs.ph==='guess')startReview()}break;
+    case 'next':if(amHost()){if(!hs.rv){hs.rv=true}else{hs.rq++;hs.rv=false;if(hs.rq>=hs.q.length){hs.rq=0;hs.ri++}if(hs.ri>=hs.tg.length){endRound();break}}pushHost()}break;
+    case 'nextround':if(amHost())newRound();break;
+    case 'final':if(amHost()){hs.ph='final';pushHost()}break;
+    case 'again':if(amHost())resetToLobby();break;
+    case 'takeover':if(lastH){hs=JSON.parse(JSON.stringify(lastH));hs.code=code;pushHost();toast("You're the host now")}break;
+  }
+});
+
+/* ---------- boot ---------- */
+render();
+(async()=>{
+  if(window.claude&&window.claude.use){try{room=await window.claude.use('room')}catch(e){room=null}}
+  roomState=(room||typeof WebSocket==='function')?'ok':'none';lastView='';render();
+})();
+</script>
+</body>
+</html>
